@@ -20,6 +20,6 @@ public class User
 public enum PlanType
 {
     Free,
-    Small,
-    Large
+    Basic,
+    Pro
 }
