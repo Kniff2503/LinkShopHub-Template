@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: linkshub-web
+    env: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
