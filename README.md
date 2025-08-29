@@ -1,0 +1,1 @@
+# LinkShopHub-Template
