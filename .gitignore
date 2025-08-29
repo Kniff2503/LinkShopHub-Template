@@ -1,0 +1,70 @@
+## .NET
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+[Bb]in/
+[Oo]bj/
+[xX]64/
+[xX]86/
+[aA][rR][mM]/
+[aA][rR][mM]64/
+[bB]uild/
+[Ll]ogs/
+*.log
+*.tlog
+*.lastbuildstate
+*.cache
+*.tmp
+*.tmp_proj
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+## Visual Studio / Rider
+.vs/
+.idea/
+*.VC.db
+*.VC.VC.opendb
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+## Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+## OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## Node / JS (falls Tailwind o. ä.)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+## Docker
+.dockerignore
+
+## User-Secrets / Env
+secrets.json
+.env
+.env.local
+.env.*.local
+
+## Publish
+[pP]ublish/
+[pP]ublish[Pp]rofiles/
+[Aa]pp[Pp]ackages/
+[Dd]ocker[Cc]ompose.override.yml
