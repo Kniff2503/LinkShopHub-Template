@@ -17,5 +17,12 @@ public static class BillingEndpoints
 
                 return Results.Ok(new { url = sessionUrl });
             });
+
+        app.MapPost("/api/webhooks/stripe", async (HttpContext ctx, StripeWebhookHandler handler) =>
+        {
+            var json = await new StreamReader(ctx.Request.Body).ReadToEndAsync();
+            await handler.HandleAsync(json, ctx.Request.Headers["Stripe-Signature"], CancellationToken.None);
+            return Results.Ok();
+        });
     }
 }
