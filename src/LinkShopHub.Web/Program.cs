@@ -1,5 +1,6 @@
 using LinkShopHub.Infrastructure.Data;
 using LinkShopHub.Web.Components;
+using LinkShopHub.Web.Features.Billing;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
@@ -9,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddMudServices();
+
+builder.Services.AddScoped<StripeCheckoutService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -31,5 +34,7 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+app.MapBilling();
 
 app.Run();
