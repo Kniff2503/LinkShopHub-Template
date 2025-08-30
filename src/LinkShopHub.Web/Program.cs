@@ -1,6 +1,7 @@
 using LinkShopHub.Infrastructure.Data;
 using LinkShopHub.Web.Components;
 using LinkShopHub.Web.Features.Billing;
+using LinkShopHub.Web.Features.Health;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
@@ -36,5 +37,6 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.MapBilling();
+app.MapHealth();
 
 app.Run();
