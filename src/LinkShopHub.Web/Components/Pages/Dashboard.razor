@@ -1,5 +1,69 @@
-﻿<h3>Dashboard</h3>
+﻿@page "/dashboard"
+@using LinkShopHub.Domain.Entities
+@using LinkShopHub.Infrastructure.Data
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@rendermode InteractiveServer
+@inject NavigationManager Nav
+@inject AppDbContext Db
+@inject AuthenticationStateProvider AuthProvider
 
-@code {
+<MudText Typo="Typo.h4" Class="mb-4">My Dashboard</MudText>
 
+<MudList T="Link" @bind-Items="links" @bind-Items:after="SaveOrderAsync">
+    @foreach (var link in links.OrderBy(l => l.SortOrder))
+    {
+        <MudListItem Icon="@Icons.Material.Filled.Link" Text="@link.Label" SecondaryText="@link.Url" />
+        <MudButton Size="Size.Small" Icon="@Icons.Material.Filled.ArrowUpward" OnClick="() => MoveUp(link)" />
+        <MudButton Size="Size.Small" Icon="@Icons.Material.Filled.ArrowDownward" OnClick="() => MoveDown(link)" />
+    }
+</MudList>
+
+
+@code
+{
+    private List<Link> links = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // var authState = await AuthProvider.GetAuthenticationStateAsync();
+        // var userId = Guid.Parse(authState.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException());
+        var userId = Guid.Parse("11111111-1111-1111-1111-111111111111"); 
+        links = await Db.Links
+                        .Where(l => l.UserId == userId)
+                        .OrderBy(l => l.SortOrder)
+                        .ToListAsync();
+    }
+
+    private async Task SaveOrderAsync()
+    {
+        for (int i = 0; i < links.Count; i++)
+        {
+            links[i].SortOrder = i;
+        }
+
+        Db.Links.UpdateRange(links);
+        await Db.SaveChangesAsync();
+    }
+
+    private async Task MoveUp(Link link)
+    {
+        var index = links.IndexOf(link);
+        if (index > 0)
+        {
+            (links[index], links[index - 1]) = (links[index - 1], links[index]);
+            await SaveOrderAsync();
+        }
+    }
+
+    private async Task MoveDown(Link link)
+    {
+        var index = links.IndexOf(link);
+        if (index < links.Count - 1)
+        {
+            (links[index], links[index + 1]) = (links[index + 1], links[index]);
+            await SaveOrderAsync();
+        }
+    }
 }
