@@ -32,7 +32,7 @@ public class StripeCheckoutService()
 
         var options = new SessionCreateOptions
         {
-            PaymentMethodTypes = new List<string> { "card" },
+            PaymentMethodTypes = new List<string> { "card", "paypal" },
             Mode = "subscription",
             LineItems = new List<SessionLineItemOptions>
             {

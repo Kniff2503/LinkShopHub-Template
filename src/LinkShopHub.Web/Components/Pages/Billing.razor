@@ -1,0 +1,59 @@
+﻿@page "/billing"
+@rendermode InteractiveServer
+@using DotNetEnv
+@using LinkShopHub.Domain.Entities
+@using LinkShopHub.Web.Features.Billing
+@inject StripeCheckoutService Checkout
+@inject IWebHostEnvironment Env
+@inject NavigationManager Nav
+
+<MudText Typo="Typo.h3" Class="mb-4">Choose a plan</MudText>
+
+<MudGrid>
+    <MudItem xs="12" md="6">
+        <MudCard Elevation="3">
+            <MudCardContent>
+                <MudText Typo="Typo.h5">Basic</MudText>
+                <MudText Typo="Typo.h4" Color="Color.Success">€4.99 / month</MudText>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           OnClick="() => CreateSessionAsync(PlanType.Basic)">
+                    Subscribe
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudCard Elevation="3">
+            <MudCardContent>
+                <MudText Typo="Typo.h5">Pro</MudText>
+                <MudText Typo="Typo.h4" Color="Color.Success">€9.99 / month</MudText>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           OnClick="() => CreateSessionAsync(PlanType.Pro)">
+                    Subscribe
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code
+{
+    private async Task CreateSessionAsync(PlanType plan)
+    {
+        var baseUrl = Env.IsDevelopment()
+            ? "https://localhost:7270"
+            : "https://linkshophub.onrender.com";
+
+        var url = await Checkout.CreateSessionAsync(
+            plan,
+            $"{baseUrl}/billing/success",
+            $"{baseUrl}/billing/cancel");
+
+        Nav.NavigateTo(url, forceLoad: true);
+    }
+}
