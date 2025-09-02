@@ -14,6 +14,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         npgsqlOptions.EnableRetryOnFailure()));
 builder.Services.AddMudServices();
 
+builder.Services.AddServerSideBlazor(options =>
+{
+    options.DetailedErrors = true;
+});
+
 builder.Services.AddScoped<StripeCheckoutService>();
 
 builder.Services.AddRazorComponents()

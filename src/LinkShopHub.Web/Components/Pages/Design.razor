@@ -1,0 +1,65 @@
+﻿@page "/design"
+@using Microsoft.AspNetCore.Components.Forms
+
+<MudText Typo="Typo.h4" Class="mb-4">Design Editor</MudText>
+
+<MudGrid>
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6">Accent Color</MudText>
+            <MudColorPicker @bind-Text="accent" Label="Accent Color" />
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6">Background Image</MudText>
+
+            <MudFileUpload T="IBrowserFile" Accept="image/*" FilesChanged="(file) => OnImageSelected([file])">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary">
+                        Upload
+                    </MudButton>
+                </ActivatorContent>
+                <SelectedTemplate>
+                    @if (context != null)
+                    {
+                        <MudText>@context.Name</MudText>
+                    }
+                    else
+                    {
+                        <MudText>No File</MudText>
+                    }
+                </SelectedTemplate>
+            </MudFileUpload>
+
+            @if (!string.IsNullOrEmpty(backgroundUrl))
+            {
+                @backgroundUrl
+            }
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Style="@($"background:{accent};color:white;")">
+            <MudText>Live Preview</MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private string accent = "#673ab7";
+    private string backgroundUrl = "";
+
+    private async Task OnImageSelected(IEnumerable<IBrowserFile> files)
+    {
+        var file = files.FirstOrDefault();
+        if (file is null) return;
+
+        using var stream = file.OpenReadStream();
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream);
+
+        backgroundUrl = $"data:image;base64,{Convert.ToBase64String(memoryStream.ToArray())}";
+    }
+}
