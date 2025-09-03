@@ -1,0 +1,64 @@
+﻿@page "/admin"
+@using LinkShopHub.Domain.Entities
+@using LinkShopHub.Infrastructure.Data
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext Db
+
+<MudText Typo="Typo.h4" Class="mb-4">Super-Admin</MudText>
+
+<!-- Filter -->
+<MudTextField @bind-Value="search" Placeholder="Search user…" Immediate="true" />
+
+<!-- Table -->
+<MudTable Items="users" Filter="FilterFunc" Striped="true" Bordered="true">
+    <HeaderContent>
+        <MudTh>Email</MudTh>
+        <MudTh>Plan</MudTh>
+        <MudTh>Revenue</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Email</MudTd>
+        <MudTd>@context.CurrentPlan</MudTd>
+        <MudTd>€@context.Revenue</MudTd>
+        <MudTd>
+            <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => ExportCsv(context.Id)">CSV</MudButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code
+{
+    private string search = "";
+    private List<UserDto> users = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await Db.Users
+                .Select(u => new UserDto
+                {
+                    Id = u.Id,
+                    Email = u.Email,
+                    CurrentPlan = u.CurrentPlan,
+                    Revenue = u.Orders.Sum(o => o.Amount)
+                })
+                .ToListAsync();
+    }
+
+    private bool FilterFunc(UserDto u) =>
+        string.IsNullOrWhiteSpace(search) ||
+        u.Email.Contains(search, StringComparison.OrdinalIgnoreCase);
+
+    private void ExportCsv(Guid userId)
+    {
+        // generate CSV → download later
+    }
+
+    public record UserDto
+    {
+        public Guid Id { get; init; }
+        public string Email { get; init; }
+        public PlanType CurrentPlan { get; init; }
+        public decimal Revenue { get; init; }
+    }
+}
