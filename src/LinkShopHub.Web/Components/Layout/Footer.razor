@@ -1,0 +1,29 @@
+﻿@using LinkShopHub.Domain.Entities
+@using LinkShopHub.Infrastructure.Data
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
+@inject AppDbContext Db
+@inject AuthenticationStateProvider AuthProvider
+
+@code {
+    private User? user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var userIdStr = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (Guid.TryParse(userIdStr, out var userId))
+        {
+            user = await Db.Users.FindAsync(userId);
+        }
+    }
+}
+
+
+<footer class="py-3 mt-auto"
+        style="position: sticky; bottom: 0; background: var(--mud-palette-background);">
+    <small class="mud-text-secondary">Powered by LinkShopHub</small>
+</footer>
+

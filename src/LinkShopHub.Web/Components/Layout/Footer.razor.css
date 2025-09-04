@@ -1,0 +1,7 @@
+﻿.footer {
+    color: burlywood;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    background-color: var(--mud-palette-background);
+}

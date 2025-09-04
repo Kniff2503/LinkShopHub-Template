@@ -96,3 +96,27 @@ main {
         right: 0.75rem;
         top: 0.5rem;
     }
+
+    /* Own css */
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+.mud-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.content-wrapper {
+    flex: 1;
+}
+
+.footer {
+    width: 100%;
+    background-color: var(--mud-palette-background);
+    text-align: center;
+    padding: 1rem 0;
+}
