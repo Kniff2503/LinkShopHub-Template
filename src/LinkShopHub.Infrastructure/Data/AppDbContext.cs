@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<ClickEvent> ClickEvents => Set<ClickEvent>();
     public DbSet<Order> Orders => Set<Order>();
+    public DbSet<CustomDomain> CustomDomains => Set<CustomDomain>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

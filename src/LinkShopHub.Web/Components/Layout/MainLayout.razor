@@ -14,9 +14,12 @@
         <MudNavLink Href="/admin" Icon="@Icons.Material.Filled.AdminPanelSettings">Admin</MudNavLink>
     </MudAppBar>
 
-    <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudMainContent Class="d-flex flex-column" Style="min-height: 100vh;">
+        <MudContainer MaxWidth="MaxWidth.Large" Class="flex-grow-1 py-4">
             @Body
         </MudContainer>
+        <MudPaper Class="d-flex justify-center">
+            <Footer />
+        </MudPaper>
     </MudMainContent>
 </MudLayout>
