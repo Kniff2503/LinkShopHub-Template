@@ -1,0 +1,34 @@
+﻿@page "/profile"
+@using LinkShopHub.Web.Services
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
+@inject ISnackbar Snackbar
+
+@if (!string.IsNullOrEmpty(QrData))
+{
+    <MudCard Class="mt-4">
+        <MudCardContent>
+            <MudText Typo="Typo.h6">Share QR</MudText>
+            <img src="@QrData" class="rounded" width="150" />
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                       OnClick="CopyLink">Copy link</MudButton>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code
+{
+    private string QrData = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var url = NavigationManager.Uri;
+        QrData = QrService.GenerateDataUri(url);
+    }
+
+    private async Task CopyLink()
+    {
+        await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", NavigationManager.Uri);
+        Snackbar.Add("Link copied!", Severity.Success);
+    }
+}
