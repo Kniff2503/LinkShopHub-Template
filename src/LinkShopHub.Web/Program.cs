@@ -3,6 +3,7 @@ using LinkShopHub.Web.Components;
 using LinkShopHub.Web.Data;
 using LinkShopHub.Web.Features.Billing;
 using LinkShopHub.Web.Features.Health;
+using LinkShopHub.Web.Services;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
@@ -13,6 +14,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"), npgsqlOptions =>
         npgsqlOptions.EnableRetryOnFailure()));
 builder.Services.AddMudServices();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddServerSideBlazor(options =>
 {
