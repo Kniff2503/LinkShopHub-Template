@@ -3,6 +3,7 @@ using LinkShopHub.Web.Components;
 using LinkShopHub.Web.Data;
 using LinkShopHub.Web.Features.Billing;
 using LinkShopHub.Web.Features.Health;
+using LinkShopHub.Web.Features.Links;
 using LinkShopHub.Web.Services;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
@@ -54,5 +55,6 @@ app.MapRazorComponents<App>()
 
 app.MapBilling();
 app.MapHealth();
+app.MapLinkClicks();
 
 app.Run();

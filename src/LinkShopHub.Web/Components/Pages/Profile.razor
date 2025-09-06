@@ -1,8 +1,13 @@
 ﻿@page "/profile"
+@using LinkShopHub.Domain.Entities
+@using LinkShopHub.Infrastructure.Data
 @using LinkShopHub.Web.Services
+@using Microsoft.EntityFrameworkCore
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JsRuntime
 @inject ISnackbar Snackbar
+@inject AppDbContext Db
+@inject ILogger<Profile> Log
 
 @if (!string.IsNullOrEmpty(QrData))
 {
@@ -14,21 +19,70 @@
                        OnClick="CopyLink">Copy link</MudButton>
         </MudCardContent>
     </MudCard>
+    @if (Links.Any())
+    {
+        <MudList T="Link">
+            @foreach (var link in Links)
+            {
+                <MudListItem Text="@link.Label"
+                             SecondaryText="@link.Url"
+                             Icon="@Icons.Material.Filled.Link"
+                             OnClick="() => OnLinkClicked(link)" />
+            }
+        </MudList>
+    }
 }
 
 @code
 {
+    private string Slug = string.Empty;
+    private List<Link> Links = new();
     private string QrData = "";
+    private string PickVariant() => Random.Shared.Next(2) == 0 ? "A" : "B";
 
     protected override async Task OnInitializedAsync()
     {
-        var url = NavigationManager.Uri;
-        QrData = QrService.GenerateDataUri(url);
+        var userId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        var user = await Db.Users
+                           .Include(u => u.Links)
+                           .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user is not null)
+        {
+            Slug = user.Slug;
+            Links = user.Links.OrderBy(l => l.SortOrder).ToList();
+        }
+
+        // QR-Code für aktuelle Seite
+        QrData = QrService.GenerateDataUri(NavigationManager.Uri);
     }
 
     private async Task CopyLink()
     {
         await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", NavigationManager.Uri);
         Snackbar.Add("Link copied!", Severity.Success);
+    }
+
+    private async Task OnLinkClicked(Link link)
+    {
+        // 1. Variante zuweisen (falls noch nicht geschehen)
+        if (string.IsNullOrEmpty(link.AbVariant))
+            link.AbVariant = PickVariant();   // "A" oder "B"
+
+        // 2. Klick speichern
+        var click = new ClickEvent
+        {
+            LinkId = link.Id,
+            Variant = link.AbVariant,   // ← A oder B
+            Timestamp = DateTime.UtcNow,
+            IpAddress = "0.0.0.0",      // TODO: real IP
+            Referer = null
+        };
+
+        Db.ClickEvents.Add(click);
+        await Db.SaveChangesAsync();
+
+        // 3. Weiterleiten
+        NavigationManager.NavigateTo(link.Url, forceLoad: true);
     }
 }

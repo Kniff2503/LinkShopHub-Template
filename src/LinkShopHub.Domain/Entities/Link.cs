@@ -11,6 +11,7 @@ public class Link
     public string? ThumbnailUrl { get; set; }
     public int SortOrder { get; set; }
     public LinkType Type { get; set; } = LinkType.Link;
+    public string? AbVariant { get; set; } // "A" or "B"
 
     public User User { get; set; } = default!;
 }
