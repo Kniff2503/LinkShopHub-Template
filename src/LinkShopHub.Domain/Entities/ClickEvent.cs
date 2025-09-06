@@ -8,6 +8,7 @@ public class ClickEvent
     public string? Referer { get; set; }
     public string? IpAddress { get; set; }
     public string? Country { get; set; }
+    public string? Variant { get; set; } // "A" or "B"
 
     public Link Link { get; set; } = default!;
 }

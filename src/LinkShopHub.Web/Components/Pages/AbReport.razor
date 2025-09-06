@@ -1,0 +1,24 @@
+﻿@page "/ab-report"
+@using LinkShopHub.Infrastructure.Data
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext Db
+
+<MudText Typo="Typo.h4">A/B Results</MudText>
+<MudChart ChartType="ChartType.Pie" InputData="@data" InputLabels="@labels" />
+
+@code
+{
+    private double[] data = { 0, 0 };
+    private string[] labels = { "Variant A", "Variant B" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var stats = await Db.ClickEvents
+            .Where(c => c.Variant != null)
+            .GroupBy(c => c.Variant)
+            .Select(g => new { Variant = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        data = stats.Select(s => (double)s.Count).ToArray();
+    }
+}
