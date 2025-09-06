@@ -5,6 +5,7 @@ using LinkShopHub.Web.Features.Billing;
 using LinkShopHub.Web.Features.Health;
 using LinkShopHub.Web.Features.Links;
 using LinkShopHub.Web.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
@@ -23,6 +24,20 @@ builder.Services.AddServerSideBlazor(options =>
 });
 
 builder.Services.AddScoped<StripeCheckoutService>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "LinkShopHub API", Version = "v1" });
+});
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("global", config =>
+    {
+        config.PermitLimit = 100;
+        config.Window = TimeSpan.FromMinutes(1);
+        config.AutoReplenishment = true;
+    });
+});
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -42,6 +57,8 @@ if (app.Environment.IsDevelopment())
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await DemoSeed.SeedAsync(db);
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "LinkShopHub API v1"));
 }
 
 app.UseHttpsRedirection();
