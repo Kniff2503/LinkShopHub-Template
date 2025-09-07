@@ -1,0 +1,30 @@
+﻿@page "/auth/signup"
+@rendermode InteractiveServer
+
+<MudText Typo="Typo.h4">Create Account</MudText>
+
+<EditForm Model="Input" OnValidSubmit="HandleSignUp">
+    <DataAnnotationsValidator />
+    <MudTextField @bind-Value="Input.Email" Label="Email" />
+    <MudTextField @bind-Value="Input.Password" Label="Password" InputType="InputType.Password" />
+    <MudTextField @bind-Value="Input.ConfirmPassword" Label="Confirm Password" InputType="InputType.Password" />
+    <MudButton Type="Submit" Variant="Variant.Filled" Color="Color.Primary">Sign Up</MudButton>
+</EditForm>
+
+@code
+{
+    private SignUpInput Input = new();
+
+    private void HandleSignUp()   // async OK with OnSubmit
+    {
+        // TODO: create user, send email, etc.
+    }
+
+
+    private class SignUpInput
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

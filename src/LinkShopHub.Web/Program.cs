@@ -1,10 +1,12 @@
 using LinkShopHub.Infrastructure.Data;
+using LinkShopHub.Infrastructure.Identity;
 using LinkShopHub.Web.Components;
 using LinkShopHub.Web.Data;
 using LinkShopHub.Web.Features.Billing;
 using LinkShopHub.Web.Features.Health;
 using LinkShopHub.Web.Features.Links;
 using LinkShopHub.Web.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
@@ -38,6 +40,18 @@ builder.Services.AddRateLimiter(options =>
         config.AutoReplenishment = true;
     });
 });
+builder.Services.AddDbContext<AppIdentityDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Identity")));
+
+builder.Services.AddIdentity<AppUser, AppRole>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequiredLength = 6;
+})
+.AddEntityFrameworkStores<AppIdentityDbContext>()
+.AddDefaultTokenProviders();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
