@@ -6,6 +6,7 @@ using LinkShopHub.Web.Features.Billing;
 using LinkShopHub.Web.Features.Health;
 using LinkShopHub.Web.Features.Links;
 using LinkShopHub.Web.Services;
+using Mailjet.Client;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"), npgsqlOptions =>
         npgsqlOptions.EnableRetryOnFailure()));
 builder.Services.AddMudServices();
+builder.Services.AddScoped<IMailjetClient>(sp =>
+{
+    var cfg = sp.GetRequiredService<IConfiguration>();
+    return new MailjetClient(cfg["Mailjet:ApiKey"], cfg["Mailjet:SecretKey"]);
+});
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddServerSideBlazor(options =>
