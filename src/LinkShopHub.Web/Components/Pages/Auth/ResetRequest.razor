@@ -1,0 +1,48 @@
+﻿@page "/auth/reset-request"
+@using System.ComponentModel.DataAnnotations
+@using LinkShopHub.Infrastructure.Identity
+@using LinkShopHub.Web.Services
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<AppUser> UserManager
+@inject IEmailService EmailService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4">Reset Password</MudText>
+
+<MudForm Model="Input" @ref="_form">
+    <MudTextField @bind-Value="Input.Email" Label="Email" For="@(() => Input.Email)" />
+    <MudButton Type="Submit" Variant="Variant.Filled" Color="Color.Primary" OnClick="HandleResetRequest">Send Reset Link</MudButton>
+</MudForm>
+
+@code
+{
+    private ResetInput Input = new();
+    private MudForm? _form;
+
+    private async Task HandleResetRequest()
+    {
+        await _form.Validate();
+        if (!_form.IsValid) return;
+
+        var user = await UserManager.FindByEmailAsync(Input.Email);
+        if (user == null)
+        {
+            Snackbar.Add("If that address exists, a reset link has been sent.", Severity.Info);
+            return;
+        }
+
+        var token = await UserManager.GeneratePasswordResetTokenAsync(user);
+        var resetUrl = NavigationManager.ToAbsoluteUri($"/auth/reset?userId={user.Id}&token={Uri.EscapeDataString(token)}").ToString();
+
+        await EmailService.SendPasswordResetAsync(user.Email, resetUrl);
+
+        Snackbar.Add("Reset link sent.", Severity.Success);
+        NavigationManager.NavigateTo("/auth/reset-sent");
+    }
+
+    private class ResetInput
+    {
+        [Required] [EmailAddress] public string Email { get; set; } = string.Empty;
+    }
+}

@@ -1,0 +1,88 @@
+﻿@page "/auth/signup"
+@using LinkShopHub.Infrastructure.Identity
+@using LinkShopHub.Web.Services
+@using Microsoft.AspNetCore.Identity
+@using System.ComponentModel.DataAnnotations
+@inject ISnackbar Snackbar
+@inject UserManager<AppUser> UserManager
+@inject IEmailService EmailService
+@inject NavigationManager NavigationManager
+
+<MudText Typo="Typo.h4">Create Account</MudText>
+<MudText Typo="Typo.h6">Interaktiv geladen: @DateTime.Now</MudText>
+
+<MudForm Model="@Input" @ref="_form">
+    <MudTextField @bind-Value="Input.Email" Label="Email" For="@(() => Input.Email)" />
+    <MudTextField @bind-Value="Input.Password" Label="Password" InputType="InputType.Password" For="@(() => Input.Password)" />
+    <MudTextField @bind-Value="Input.ConfirmPassword" Label="Confirm Password" InputType="InputType.Password" For="@(() => Input.ConfirmPassword)" />
+    <MudButton Type="Submit" Variant="Variant.Filled" Color="Color.Primary" OnClick="HandleSignUp">Sign Up</MudButton>
+</MudForm>
+
+
+@code
+{
+    private MudForm? _form;
+    private SignUpInput Input = new();
+
+    private async Task HandleSignUp()   // async OK with OnSubmit
+    {
+        await _form.Validate();
+
+        if (!_form.IsValid)
+        {
+            Snackbar.Add("Form is not valid.", Severity.Error);
+            return;
+        }
+
+        if (Input.Password != Input.ConfirmPassword)
+        {
+            Snackbar.Add("Passwords do not match.", Severity.Error);
+            return;
+        }
+
+        // Dein async Code hier
+        Snackbar.Add("SignUp gestartet");
+
+        var user = new AppUser
+        {
+            UserName = Input.Email,
+            Email = Input.Email,
+            EmailConfirmed = false,          // wird später bestätigt
+            Slug = Guid.NewGuid().ToString()[..8]
+        };
+
+        var result = await UserManager.CreateAsync(user, Input.Password);
+        if (!result.Succeeded)
+        {
+            foreach (var err in result.Errors)
+                Snackbar.Add(err.Description, Severity.Error);
+            return;
+        }
+
+        // E-Mail-Token generieren & versenden
+        var token = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+        var callbackUrl = NavigationManager.ToAbsoluteUri($"/auth/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}").ToString();
+
+        await EmailService.SendConfirmationAsync(user.Email, callbackUrl);
+
+        NavigationManager.NavigateTo("/auth/check-inbox");
+    }
+
+
+    private class SignUpInput
+    {
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+
+        [Required]
+        [MinLength(6)]
+        public string Password { get; set; } = string.Empty;
+
+        [Required]
+        [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

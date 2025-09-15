@@ -1,10 +1,15 @@
 using LinkShopHub.Infrastructure.Data;
+using LinkShopHub.Infrastructure.Identity;
 using LinkShopHub.Web.Components;
 using LinkShopHub.Web.Data;
+using LinkShopHub.Web.Features.Auth;
 using LinkShopHub.Web.Features.Billing;
 using LinkShopHub.Web.Features.Health;
 using LinkShopHub.Web.Features.Links;
 using LinkShopHub.Web.Services;
+using Mailjet.Client;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
@@ -15,13 +20,32 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"), npgsqlOptions =>
         npgsqlOptions.EnableRetryOnFailure()));
+
 builder.Services.AddMudServices();
+builder.Services.AddHttpClient("ApiClient", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7270/");
+});
+
+builder.Services.AddScoped<IMailjetClient>(sp =>
+{
+    var cfg = sp.GetRequiredService<IConfiguration>();
+    return new MailjetClient(cfg["Mailjet:ApiKey"], cfg["Mailjet:SecretKey"]);
+});
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddServerSideBlazor(options =>
 {
     options.DetailedErrors = true;
 });
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/auth/login";
+        options.AccessDeniedPath = "/auth/access-denied";
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<StripeCheckoutService>();
 builder.Services.AddEndpointsApiExplorer();
@@ -38,6 +62,18 @@ builder.Services.AddRateLimiter(options =>
         config.AutoReplenishment = true;
     });
 });
+builder.Services.AddDbContext<AppIdentityDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Identity")));
+
+builder.Services.AddIdentity<AppUser, AppRole>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequiredLength = 6;
+})
+.AddEntityFrameworkStores<AppIdentityDbContext>()
+.AddDefaultTokenProviders();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -63,6 +99,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseAntiforgery();
 
@@ -73,5 +111,6 @@ app.MapRazorComponents<App>()
 app.MapBilling();
 app.MapHealth();
 app.MapLinkClicks();
+app.MapAuth();
 
 app.Run();
