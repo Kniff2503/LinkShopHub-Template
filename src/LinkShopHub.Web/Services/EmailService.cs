@@ -9,6 +9,7 @@ public interface IEmailService
     Task SendReceiptAsync(string email, decimal amount);
     Task SendConfirmationAsync(string email, string confirmationUrl);
     Task SendPasswordResetAsync(string email, string resetUrl);
+    Task SendEmailChangeAsync(string oldEmail, string confirmationUrl);
 }
 
 public class EmailService : IEmailService
@@ -99,5 +100,18 @@ public class EmailService : IEmailService
         <p>If you did not request this, you can safely ignore this email.</p>";
 
         await SendEmailAsync(email, subject, text, html);
+    }
+
+    public async Task SendEmailChangeAsync(string oldEmail, string confirmationUrl)
+    {
+        const string subject = "Confirm your new email address";
+        const string text = "Please confirm your new email by clicking the link below.";
+        var html = $@"
+        <p>Hi there!</p>
+        <p>Please confirm your new email address by clicking the link below:</p>
+        <p><a href='{confirmationUrl}' target='_blank'>Confirm New Email</a></p>
+        <p>If you did not request this, you can safely ignore this email.</p>";
+
+        await SendEmailAsync(oldEmail, subject, text, html);
     }
 }

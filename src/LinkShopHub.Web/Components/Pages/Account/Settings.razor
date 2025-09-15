@@ -1,5 +1,71 @@
-﻿<h3>Settings</h3>
+﻿@page "/account/settings"
+@using System.ComponentModel.DataAnnotations
+@using LinkShopHub.Infrastructure.Identity
+@using LinkShopHub.Web.Services
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<AppUser> UserManager
+@inject IEmailService EmailService
+@inject NavigationManager NavigationManager
 
-@code {
+<MudText Typo="Typo.h4">Account Settings</MudText>
 
+<MudTabs>
+    <MudTabPanel Text="Profile">
+        <MudForm Model="ProfileInputField" OnValidSubmit="HandleProfileSave">
+            <MudTextField @bind-Value="ProfileInputField.Email" Label="Email" For="@(() => ProfileInputField.Email)" />
+            <MudButton Type="Submit" Variant="Variant.Filled" Color="Color.Primary">Save</MudButton>
+        </MudForm>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Password">
+        <MudForm Model="PasswordInputField" OnValidSubmit="HandlePasswordChange">
+            <MudTextField @bind-Value="PasswordInputField.OldPassword" Label="Old Password" InputType="InputType.Password" />
+            <MudTextField @bind-Value="PasswordInputField.NewPassword" Label="New Password" InputType="InputType.Password" />
+            <MudButton Type="Submit" Variant="Variant.Filled" Color="Color.Primary">Change Password</MudButton>
+        </MudForm>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Danger Zone">
+        <MudAlert Severity="Severity.Warning">Deleting your account is permanent.</MudAlert>
+        <MudTextField @bind-Value="DeleteInputField.Password" Label="Confirm Password" InputType="InputType.Password" />
+        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="HandleDelete">Delete Account</MudButton>
+    </MudTabPanel>
+</MudTabs>
+
+@code
+{
+    private ProfileInput ProfileInputField = new();
+    private PasswordInput PasswordInputField = new();
+    private DeleteInput DeleteInputField = new();
+
+    private async Task HandleProfileSave()
+    {
+        // TODO: change email, send token, etc.
+    }
+
+    private async Task HandlePasswordChange()
+    {
+        // TODO: change password
+    }
+
+    private async Task HandleDelete()
+    {
+        // TODO: delete account
+    }
+
+    private class ProfileInput
+    {
+        [Required][EmailAddress] public string Email { get; set; } = string.Empty;
+    }
+
+    private class PasswordInput
+    {
+        [Required] public string OldPassword { get; set; } = string.Empty;
+        [Required][StringLength(100, MinimumLength = 6)] public string NewPassword { get; set; } = string.Empty;
+    }
+
+    private class DeleteInput
+    {
+        [Required] public string Password { get; set; } = string.Empty;
+    }
 }

@@ -2,6 +2,7 @@ using LinkShopHub.Infrastructure.Data;
 using LinkShopHub.Infrastructure.Identity;
 using LinkShopHub.Web.Components;
 using LinkShopHub.Web.Data;
+using LinkShopHub.Web.Features.Account;
 using LinkShopHub.Web.Features.Auth;
 using LinkShopHub.Web.Features.Billing;
 using LinkShopHub.Web.Features.Health;
@@ -112,5 +113,6 @@ app.MapBilling();
 app.MapHealth();
 app.MapLinkClicks();
 app.MapAuth();
+app.MapAccount();
 
 app.Run();
