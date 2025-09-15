@@ -8,6 +8,7 @@ public interface IEmailService
     Task SendWelcomeAsync(string email);
     Task SendReceiptAsync(string email, decimal amount);
     Task SendConfirmationAsync(string email, string confirmationUrl);
+    Task SendPasswordResetAsync(string email, string resetUrl);
 }
 
 public class EmailService : IEmailService
@@ -85,5 +86,18 @@ public class EmailService : IEmailService
             _log.LogError(string.Format("ErrorInfo: {0}\n", response.GetErrorInfo()));
             _log.LogError(string.Format("ErrorMessage: {0}\n", response.GetErrorMessage()));
         }
+    }
+
+    public async Task SendPasswordResetAsync(string email, string resetUrl)
+    {
+        const string subject = "Reset your LinkShopHub password";
+        const string text = "Please reset your password by clicking the link below.";
+        var html = $@"
+        <p>Hi there!</p>
+        <p>Please reset your password by clicking the link below:</p>
+        <p><a href='{resetUrl}' target='_blank'>Reset Password</a></p>
+        <p>If you did not request this, you can safely ignore this email.</p>";
+
+        await SendEmailAsync(email, subject, text, html);
     }
 }

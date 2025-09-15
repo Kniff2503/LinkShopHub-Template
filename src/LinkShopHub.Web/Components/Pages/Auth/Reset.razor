@@ -1,0 +1,84 @@
+﻿@page "/auth/reset"
+@using LinkShopHub.Infrastructure.Identity
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using System.ComponentModel.DataAnnotations
+@inject UserManager<AppUser> UserManager
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4">Set New Password</MudText>
+
+@if (Succeeded)
+{
+    <MudAlert Severity="Severity.Success">Password reset successful. You can now log in.</MudAlert>
+    <MudButton Href="/auth/login" Variant="Variant.Filled" Color="Color.Primary">Go to Login</MudButton>
+}
+else if (TokenValid)
+{
+    <MudForm Model="Input" @ref="_form">
+        <MudTextField @bind-Value="Input.NewPassword"
+                      Label="New Password"
+                      InputType="InputType.Password"
+                      For="@(() => Input.NewPassword)" />
+        <MudButton Type="Submit" Variant="Variant.Filled" Color="Color.Primary" OnClick="HandleReset">Set Password</MudButton>
+    </MudForm>
+}
+else
+{
+    <MudAlert Severity="Severity.Error">Invalid or expired reset link.</MudAlert>
+}
+
+@code
+{
+    private bool Succeeded = false;
+    private bool TokenValid = false;
+    private ResetInput Input = new();
+    private MudForm? _form;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("userId", out var userIdString) &&
+            QueryHelpers.ParseQuery(uri.Query).TryGetValue("token", out var token))
+        {
+            var user = await UserManager.FindByIdAsync(userIdString);
+            if (user != null)
+            {
+                // Validate token (dry-run)
+                var canReset = await UserManager.VerifyUserTokenAsync(user, UserManager.Options.Tokens.PasswordResetTokenProvider, "ResetPassword", token);
+                TokenValid = canReset;
+            }
+        }
+    }
+
+    private async Task HandleReset()
+    {
+        await _form.Validate();
+        if (!_form.IsValid) return;
+
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        var userId = QueryHelpers.ParseQuery(uri.Query)["userId"].ToString();
+        var token = QueryHelpers.ParseQuery(uri.Query)["token"].ToString();
+
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user == null) return;
+
+        var result = await UserManager.ResetPasswordAsync(user, token, Input.NewPassword);
+        if (result.Succeeded)
+        {
+            Succeeded = true;
+        }
+        else
+        {
+            Snackbar.Add("Reset failed", Severity.Error);
+        }
+    }
+
+    private class ResetInput
+    {
+        [Required]
+        [StringLength(100, MinimumLength = 6)]
+        public string NewPassword { get; set; } = string.Empty;
+    }
+}
