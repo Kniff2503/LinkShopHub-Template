@@ -1,0 +1,52 @@
+﻿@page "/auth/login"
+@using System.ComponentModel.DataAnnotations
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudForm @ref="_form" Model="Input">
+    <MudTextField @bind-Value="Input.Email" Label="Email" For="@(() => Input.Email)" />
+    <MudTextField @bind-Value="Input.Password" Label="Password"
+                  InputType="InputType.Password" For="@(() => Input.Password)" />
+    <MudButton Type="Submit" Variant="Variant.Filled" Color="Color.Primary"
+               Disabled="@_isSubmitting"
+               OnClick="HandleLoginAsync">Sign In</MudButton>
+</MudForm>
+
+@code
+{
+    private bool _isSubmitting = false;
+    private MudForm? _form;
+    private LoginInput Input = new();
+
+    private async Task HandleLoginAsync()
+    {
+
+        if (_isSubmitting) return;
+        if (_isSubmitting) return;
+        _isSubmitting = true;
+
+        await _form.Validate();
+        if (!_form.IsValid) return;
+
+        var client = HttpClientFactory.CreateClient("ApiClient");
+
+        var response = await client.PostAsJsonAsync("api/auth/login", Input);
+
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/dashboard");
+        }
+        else
+        {
+            Snackbar.Add("Invalid login", Severity.Error);
+        }
+        _isSubmitting = false;
+    }
+
+    private record LoginInput
+    {
+        [Required][EmailAddress] public string Email { get; set; } = string.Empty;
+        [Required] public string Password { get; set; } = string.Empty;
+    }
+}
