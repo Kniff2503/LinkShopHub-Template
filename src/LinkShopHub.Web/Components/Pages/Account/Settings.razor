@@ -5,23 +5,25 @@
 @using Microsoft.AspNetCore.Identity
 @inject UserManager<AppUser> UserManager
 @inject IEmailService EmailService
+@inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
 
 <MudText Typo="Typo.h4">Account Settings</MudText>
 
 <MudTabs>
     <MudTabPanel Text="Profile">
-        <MudForm Model="ProfileInputField" OnValidSubmit="HandleProfileSave">
+        <MudForm Model="ProfileInputField">
             <MudTextField @bind-Value="ProfileInputField.Email" Label="Email" For="@(() => ProfileInputField.Email)" />
-            <MudButton Type="Submit" Variant="Variant.Filled" Color="Color.Primary">Save</MudButton>
+            <MudButton Type="Submit" Variant="Variant.Filled" Color="Color.Primary" OnClick="HandleProfileSave">Save</MudButton>
         </MudForm>
     </MudTabPanel>
 
     <MudTabPanel Text="Password">
-        <MudForm Model="PasswordInputField" OnValidSubmit="HandlePasswordChange">
+        <MudForm Model="PasswordInputField" @ref="_passwordForm">
             <MudTextField @bind-Value="PasswordInputField.OldPassword" Label="Old Password" InputType="InputType.Password" />
             <MudTextField @bind-Value="PasswordInputField.NewPassword" Label="New Password" InputType="InputType.Password" />
-            <MudButton Type="Submit" Variant="Variant.Filled" Color="Color.Primary">Change Password</MudButton>
+            <MudButton Type="Submit" Variant="Variant.Filled" Color="Color.Primary" OnClick="HandlePasswordChange">Change Password</MudButton>
         </MudForm>
     </MudTabPanel>
 
@@ -37,6 +39,8 @@
     private ProfileInput ProfileInputField = new();
     private PasswordInput PasswordInputField = new();
     private DeleteInput DeleteInputField = new();
+    private MudForm? _passwordForm;
+    private ILogger<Settings> _log;
 
     private async Task HandleProfileSave()
     {
@@ -45,7 +49,22 @@
 
     private async Task HandlePasswordChange()
     {
-        // TODO: change password
+        await _passwordForm.Validate();
+        if (!_passwordForm.IsValid) return;
+
+        var client = HttpClientFactory.CreateClient("ApiClient");
+        var response = await client.PostAsJsonAsync("/api/account/change-password", PasswordInputField);
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Password changed successfully", Severity.Success);
+            PasswordInputField = new();   // clear form
+        }
+        else
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            _log.LogError("Password change failed. Status: {Status}, Body: {Body}, Old: {Old}, New: {New}", response.StatusCode, body, PasswordInputField.OldPassword, PasswordInputField.NewPassword);
+            Snackbar.Add($"Change failed: {body}", Severity.Error);
+        }
     }
 
     private async Task HandleDelete()

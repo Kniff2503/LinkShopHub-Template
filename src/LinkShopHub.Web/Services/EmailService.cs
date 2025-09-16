@@ -114,4 +114,15 @@ public class EmailService : IEmailService
 
         await SendEmailAsync(oldEmail, subject, text, html);
     }
+
+    public async Task SendPasswordChangedAsync(string email)
+    {
+        const string subject = "Password changed – LinkShopHub";
+        const string text = "Your password has been changed. If you did not do this, please contact support immediately.";
+        var html = $@"
+        <p>Hi there!</p>
+        <p>Your password has been changed. If you did not do this, please contact support immediately.</p>";
+
+        await SendEmailAsync(email, subject, text, html);
+    }
 }

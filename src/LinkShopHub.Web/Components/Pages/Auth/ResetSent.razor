@@ -1,5 +1,8 @@
-﻿<h3>ResetSent</h3>
+﻿@page "/auth/reset-sent"
+@inject NavigationManager NavigationManager
 
-@code {
-
-}
+<MudText Typo="Typo.h4">Check Your Inbox</MudText>
+<MudAlert Severity="Severity.Info">
+    If that address exists, we’ve sent you a password-reset link.
+</MudAlert>
+<MudButton Href="/auth/login" Variant="Variant.Outlined" Color="Color.Primary" Class="mt-4">Back to Login</MudButton>
