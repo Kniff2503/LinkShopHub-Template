@@ -1,0 +1,209 @@
+﻿@page "/account/settings"
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using LinkShopHub.Infrastructure.Identity
+@using LinkShopHub.Web.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<AppUser> UserManager
+@inject SignInManager<AppUser> SignInManager
+@inject IHttpClientFactory HttpClientFactory
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject ILogger<Settings> Logger
+
+<AuthorizeView>
+    <Authorized>
+        <MudText Typo="Typo.h4" Class="mb-4">Account Settings</MudText>
+
+        <MudTabs>
+            <MudTabPanel Text="Profile">
+                <MudForm Model="_profileInput" @ref="_profileForm">
+                    <MudTextField @bind-Value="_profileInput.Email"
+                                  Label="E-Mail"
+                                  For="@(() => _profileInput.Email)"
+                                  Disabled="_profileLoading" />
+                    <div class="d-flex mt-3">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   OnClick="SaveProfileAsync"
+                                   Disabled="_profileLoading">
+                            @if (_profileLoading)
+                            {
+                                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                            }
+                            Save
+                        </MudButton>
+                    </div>
+                </MudForm>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Password">
+                <MudForm Model="_passwordInput" @ref="_passwordForm">
+                    <MudTextField @bind-Value="_passwordInput.OldPassword"
+                                  Label="Current password"
+                                  InputType="InputType.Password"
+                                  For="@(() => _passwordInput.OldPassword)" />
+                    <MudTextField @bind-Value="_passwordInput.NewPassword"
+                                  Label="New password"
+                                  InputType="InputType.Password"
+                                  For="@(() => _passwordInput.NewPassword)" />
+                    <div class="d-flex mt-3">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   OnClick="ChangePasswordAsync"
+                                   Disabled="_passwordLoading">
+                            @if (_passwordLoading)
+                            {
+                                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                            }
+                            Change password
+                        </MudButton>
+                    </div>
+                </MudForm>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Danger Zone">
+                <MudAlert Severity="Severity.Warning" Class="mb-3">
+                    Deleting your account is permanent – all data will be lost.
+                </MudAlert>
+                <MudTextField @bind-Value="_deleteInput.Password"
+                              Label="Confirm your password"
+                              InputType="InputType.Password"
+                              For="@(() => _deleteInput.Password)" />
+                <div class="d-flex mt-3">
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Error"
+                               OnClick="DeleteAccountAsync"
+                               Disabled="_deleteLoading">
+                        @if (_deleteLoading)
+                        {
+                            <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                        }
+                        Delete account
+                    </MudButton>
+                </div>
+            </MudTabPanel>
+        </MudTabs>
+    </Authorized>
+
+    <NotAuthorized>
+        <MudAlert Severity="Severity.Info">
+            Please <MudLink Href="/auth/login?returnUrl=/account/settings">log in</MudLink> to manage your account.
+        </MudAlert>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    /* ---------- Models ---------- */
+    private class ProfileInput
+    {
+        [Required, EmailAddress] public string Email { get; set; } = string.Empty;
+    }
+
+    private class PasswordInput
+    {
+        [Required] public string OldPassword { get; set; } = string.Empty;
+        [Required, StringLength(100, MinimumLength = 6)] public string NewPassword { get; set; } = string.Empty;
+    }
+
+    private class DeleteInput
+    {
+        [Required] public string Password { get; set; } = string.Empty;
+    }
+
+    /* ---------- State ---------- */
+    private ProfileInput _profileInput = new();
+    private PasswordInput _passwordInput = new();
+    private DeleteInput _deleteInput = new();
+
+    private MudForm? _profileForm;
+    private MudForm? _passwordForm;
+
+    private bool _profileLoading;
+    private bool _passwordLoading;
+    private bool _deleteLoading;
+
+    private AppUser? _user;
+
+    /* ---------- Lifecycle ---------- */
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _user = await UserManager.GetUserAsync(authState.User);
+    }
+
+    /* ---------- Handlers ---------- */
+    private async Task SaveProfileAsync()
+    {
+        await _profileForm!.Validate();
+        if (!_profileForm.IsValid) return;
+
+        _profileLoading = true;
+        try
+        {
+            var client = HttpClientFactory.CreateClient("ApiClient");
+            var resp = await client.PutAsJsonAsync("/api/account/email", new { email = _profileInput.Email });
+
+            if (resp.IsSuccessStatusCode)
+                Snackbar.Add("E-Mail updated – check your inbox for confirmation.", Severity.Success);
+            else
+                Snackbar.Add($"Error: {await resp.Content.ReadAsStringAsync()}", Severity.Error);
+        }
+        finally { _profileLoading = false; }
+    }
+
+    private async Task ChangePasswordAsync()
+    {
+        await _passwordForm!.Validate();
+        if (!_passwordForm.IsValid) return;
+
+        _passwordLoading = true;
+        try
+        {
+            var client = HttpClientFactory.CreateClient("ApiClient");
+            var resp = await client.PostAsJsonAsync("/api/account/change-password", _passwordInput);
+
+            if (resp.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Password changed successfully.", Severity.Success);
+                _passwordInput = new();
+                await _passwordForm.ResetAsync();
+            }
+            else
+            {
+                Snackbar.Add($"Change failed: {await resp.Content.ReadAsStringAsync()}", Severity.Error);
+            }
+        }
+        finally { _passwordLoading = false; }
+    }
+
+    private async Task DeleteAccountAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_deleteInput.Password))
+        {
+            Snackbar.Add("Please enter your password.", Severity.Warning);
+            return;
+        }
+
+        _deleteLoading = true;
+        try
+        {
+            var client = HttpClientFactory.CreateClient("ApiClient");
+            var resp = await client.PostAsJsonAsync("/api/account/delete", new { password = _deleteInput.Password });
+
+            if (resp.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Account deleted – goodbye 👋", Severity.Info);
+                Navigation.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                Snackbar.Add($"Deletion failed: {await resp.Content.ReadAsStringAsync()}", Severity.Error);
+            }
+        }
+        finally { _deleteLoading = false; }
+    }
+}
