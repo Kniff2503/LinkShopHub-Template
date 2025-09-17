@@ -1,5 +1,6 @@
 ﻿using LinkShopHub.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 
 namespace LinkShopHub.Web.Features.Auth;
 
@@ -8,7 +9,7 @@ public static class AuthEndpoints
     public static void MapAuth(this IEndpointRouteBuilder app)
     {
         app.MapPost("/api/auth/login", async (
-            LoginRequest request,
+            [FromBody] LoginRequest request,
             SignInManager<AppUser> signInManager,
             HttpContext httpContext) =>
         {
@@ -19,7 +20,10 @@ public static class AuthEndpoints
                 lockoutOnFailure: false);
 
             if (result.Succeeded)
-                return Results.Ok(new { success = true });
+            {
+                var cookie = httpContext.Response.Headers.SetCookie;
+                return Results.Ok(new { cookie });
+            }
 
             return Results.Unauthorized();
         });
