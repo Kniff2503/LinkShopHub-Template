@@ -1,4 +1,6 @@
 ﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization  // Neu: Für AuthorizeView
+@inject AuthenticationStateProvider AuthState
 
 <MudThemeProvider />
 <MudPopoverProvider />
@@ -12,7 +14,21 @@
         <MudNavLink Href="/billing" Icon="@Icons.Material.Filled.CreditCard">Billing</MudNavLink>
         <MudNavLink Href="/design" Icon="@Icons.Material.Filled.Palette">Design</MudNavLink>
         <MudNavLink Href="/admin" Icon="@Icons.Material.Filled.AdminPanelSettings">Admin</MudNavLink>
-        <MudNavLink Href="/account/settings" Icon="@Icons.Material.Filled.Settings">Account</MudNavLink>
+
+        <!-- Neu: Dynamische Auth-Links (nur für User) -->
+        <AuthorizeView>
+            <Authorized>
+                <MudText Class="ml-auto mr-3" Typo="Typo.body2">Hi, @context.User.Identity?.Name!</MudText>  <!-- User-Name aus Cookie -->
+                <MudNavLink Href="/account/settings" Icon="@Icons.Material.Filled.Settings">Account</MudNavLink>
+                <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/auth/logout">Logout</MudButton>  <!-- Dein Logout-Endpoint -->
+            </Authorized>
+            <NotAuthorized>
+                <MudNavLink Href="/auth/login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>  <!-- Für Gäste -->
+            </NotAuthorized>
+        </AuthorizeView>
+
+        <!-- Auth Test (zum Debuggen – später entfernen) -->
+        <MudNavLink Href="/test-auth" Icon="@Icons.Material.Filled.Security" Class="ml-2">Auth Test</MudNavLink>
     </MudAppBar>
 
     <MudMainContent Class="d-flex flex-column" Style="min-height: 100vh;">
