@@ -1,27 +1,21 @@
 ﻿@page "/auth/login"
 @using System.ComponentModel.DataAnnotations
-@using LinkShopHub.Infrastructure.Identity
-@using Microsoft.AspNetCore.Identity
-@inject SignInManager<AppUser> SignInManager
-@inject IHttpClientFactory HttpClientFactory
+@inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
-@rendermode interactiveServerWithoutPrerendering
 
-<MudForm @ref="_form" Model="Input">
-    <MudTextField @bind-Value="Input.Email" Label="Email" For="@(() => Input.Email)" />
-    <MudTextField @bind-Value="Input.Password" Label="Password"
-                  InputType="InputType.Password" For="@(() => Input.Password)" />
-    <MudButton Type="Submit" Variant="Variant.Filled" Color="Color.Primary"
-               Disabled="@_isSubmitting"
-               OnClick="HandleLoginAsync">Sign In</MudButton>
-</MudForm>
+<MudContainer MaxWidth="MaxWidth.Small" Class="my-16">
+    <MudForm @ref="_form" Model="Input">
+        <MudTextField @bind-Value="Input.email" Label="Email" For="@(() => Input.email)" Variant="Variant.Outlined" />
+        <MudTextField @bind-Value="Input.password" Label="Password"
+                      InputType="InputType.Password" For="@(() => Input.password)" Variant="Variant.Outlined" />
+        <MudButton Type="Submit" Variant="Variant.Filled" Color="Color.Primary"
+                   Disabled="@_isSubmitting"
+                   OnClick="HandleLoginAsync" FullWidth="true">Sign In</MudButton>
+    </MudForm>
+</MudContainer>
 
-@code
-{
-    private static IComponentRenderMode interactiveServerWithoutPrerendering = 
-        new InteractiveServerRenderMode(prerender: false);
-
+@code {
     private bool _isSubmitting = false;
     private MudForm? _form;
     private LoginInput Input = new();
@@ -31,31 +25,46 @@
         if (_isSubmitting) return;
         _isSubmitting = true;
 
-        await _form.Validate();
-        if (!_form.IsValid) return;
-
-        var client = HttpClientFactory.CreateClient("ApiClient");
-
-        var response = await client.PostAsJsonAsync("api/auth/login", Input);
-
-        if (response.IsSuccessStatusCode)
+        await _form!.Validate();
+        if (!_form.IsValid)
         {
-            // await SignInManager.RefreshSignInAsync(
-            // (await SignInManager.UserManager.FindByEmailAsync(Input.Email))!);
+            _isSubmitting = false;
+            return;
+        }
 
-            NavigationManager.NavigateTo("/dashboard", true);
-            // NavigationManager.Refresh(forceReload: true);
-        }
-        else
+        try
         {
-            Snackbar.Add("Invalid login", Severity.Error);
+            // JS-Interop: Übergebe Email/Pass einzeln (JS serialisiert zu {email:..., password:...})
+            var response = await JSRuntime.InvokeAsync<ResponseData>("authInterop.login", "/api/auth/login", Input.email, Input.password);
+
+            if (response.Status == 200)
+            {
+                Snackbar.Add("Login OK!", Severity.Success);
+                await Task.Delay(1500);  // Snackbar sichtbar
+                NavigationManager.NavigateTo("/dashboard", forceLoad: true);  // Reload liest Cookie
+            }
+            else
+            {
+                Snackbar.Add($"Fehler {response.Status}: {response.Body}", Severity.Error);
+            }
         }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"JS-Fehler: {ex.Message}", Severity.Error);
+        }
+
         _isSubmitting = false;
     }
 
     private record LoginInput
     {
-        [Required][EmailAddress] public string Email { get; set; } = string.Empty;
-        [Required] public string Password { get; set; } = string.Empty;
+        [Required, EmailAddress] public string email { get; set; } = string.Empty;  // Lowercase – passt zu Postman/Endpoint
+        [Required, MinLength(6)] public string password { get; set; } = string.Empty;  // Lowercase
+    }
+
+    private record ResponseData  // Record statt class (einfacher)
+    {
+        public int Status { get; set; }
+        public string Body { get; set; } = string.Empty;
     }
 }

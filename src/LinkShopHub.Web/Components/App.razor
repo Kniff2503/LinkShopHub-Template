@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Components.Authorization
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -13,10 +14,13 @@
 </head>
 
 <body>
-    <Routes @rendermode="InteractiveServer" />
+    <CascadingAuthenticationState>  <!-- Neu: Global Auth-State (Cookie-User) für alle Routes/Komponenten -->
+        <Routes @rendermode="InteractiveServer" />  <!-- Dein Original: InteractiveServer-Mode bleibt -->
+    </CascadingAuthenticationState>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
     <script src="_framework/blazor.web.js"></script>
+    <script src="/interops.js"></script>
 </body>
 
 </html>

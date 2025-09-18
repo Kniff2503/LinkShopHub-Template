@@ -10,6 +10,7 @@ using LinkShopHub.Web.Features.Links;
 using LinkShopHub.Web.Services;
 using Mailjet.Client;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
@@ -38,7 +39,9 @@ builder.Services
            opts.Password.RequiredLength = 6;
        })
        .AddEntityFrameworkStores<AppIdentityDbContext>()
-       .AddDefaultTokenProviders();
+       .AddDefaultTokenProviders()
+       .AddUserStore<UserStore<AppUser, AppRole, AppIdentityDbContext, Guid>>()  // Neu: Guid-Support für Users
+       .AddRoleStore<RoleStore<AppRole, AppIdentityDbContext, Guid>>();  // Neu: Guid-Support für Roles
 
 // ---------- Cookie-Auth für Blazor Server ----------
 builder.Services.ConfigureApplicationCookie(opts =>
@@ -48,6 +51,7 @@ builder.Services.ConfigureApplicationCookie(opts =>
     opts.Cookie.HttpOnly = true;
     opts.SlidingExpiration = true;
     opts.ExpireTimeSpan = TimeSpan.FromDays(30);
+    opts.LoginPath = "/auth/login";  // Neu: Default-Login-Path für [Authorize]-Redirects
 });
 
 // ---------- Blazor & Server-Side State ----------
@@ -61,6 +65,10 @@ builder.Services.AddHttpClient("ApiClient", client =>
 {
     client.BaseAddress = new Uri(
         builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7270/");
+});
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.PropertyNameCaseInsensitive = true;  // Ignoriert Case (Email == email)
 });
 
 // ---------- Services ----------
